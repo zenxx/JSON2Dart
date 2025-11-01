@@ -17,12 +17,19 @@ ${properties}
 ${construction}
   }
 
+  static List<${type}> fromJsonArray(dynamic json) {
+    if (json is List) {
+      return json.map((e) => ${type}.fromJson(e)).toList();
+    }
+    return <${type}>[];
+  }
+
   @override
   String toString() {
     return '{${toString}}';
   }
   
-  String toJson() => this.toString();
+  dynamic toJson() => jsonDecode(toString());
 }
 
 """

@@ -122,8 +122,10 @@ def add_param_to_code(code, param):
     t_code = check_level_type(t)
 
     # 字符串类型、List<String>类型和Map类型处理,需要修改toString中的输出方式
-    if t_code in [0, 2] or 'List<String?>' in t:
-        code = code.replace(': $%s' % n, ': ${%s != null?\'${json.encode(%s)}\':\'null\'}' % (n, n))
+    # if t_code in [0, 2] or 'List<String?>' in t:
+    #     code = code.replace(': $%s' % n, ': ${%s != null?\'${json.encode(%s)}\':\'null\'}' % (n, n))
+    if t_code == 0 or 'List<String?>' in t:
+        code = code.replace(': $%s' % n, ': ${%s != null ? json.encode(%s):\'null\'}' % (n, n))
 
     # dict类型处理，只需要修改construction中的输出方式
     elif t_code == 4:
@@ -220,7 +222,7 @@ def generate_code(work_bean):
             lines[index] = '//%s' % lines[index]
 
     # 最终修改，添加json库导包代码，并为顶层对象增加默认构造
-    out_res = 'import \'dart:convert\' show json;\n'
+    out_res = 'import \'dart:convert\' show json, jsonDecode;\n'
     first = True
     for line in lines:
         if line.startswith('//'):
