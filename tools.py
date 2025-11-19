@@ -124,7 +124,7 @@ def add_param_to_code(code, param):
     # 字符串类型、List<String>类型和Map类型处理,需要修改toString中的输出方式
     # if t_code in [0, 2] or 'List<String?>' in t:
     #     code = code.replace(': $%s' % n, ': ${%s != null?\'${json.encode(%s)}\':\'null\'}' % (n, n))
-    if t_code == 0 or 'List<String?>' in t:
+    if t_code in [0, 2] or 'List<String?>' in t:
         code = code.replace(': $%s' % n, ': ${%s != null ? json.encode(%s):\'null\'}' % (n, n))
 
     # dict类型处理，只需要修改construction中的输出方式
