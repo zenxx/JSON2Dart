@@ -73,29 +73,38 @@ def list_code_loop(code, count, total, n, ct):
         return code.replace('){\n', '){').replace('${loop}\n', fragment)
 
 
-# 向代码模板中插入变量
 def build_list_construction(t, f, n):
-    class_type = t.replace('List<', '').replace('>', '').replace('?', '')
-
-    list_loop = 'jsonRes[\'%s\'] == null ? null : [];\n' % f
     assert isinstance(t, str)
 
+    class_type = t.replace('List<', '').replace('>', '').replace('?', '')
+
+    # 如果是 List<自定义Model>，直接生成 fromJsonArray
+    if check_level_type(class_type) not in (1, 2) and class_type != '':
+        return (
+            "jsonRes['%s'] == null ? null : "
+            "%s.fromJsonArray(jsonRes['%s']);"
+            % (f, class_type, f)
+        )
+
+    # -------- 以下是原有逻辑（保留给基础类型 / 嵌套 List） --------
+
+    list_loop = "jsonRes['%s'] == null ? null : [];\n" % f
     code = ''
 
     total = t.count('>')
     for i in range(total):
         code = list_code_loop(code, i, total, n, class_type)
 
-    # 嵌套模板的后续处理
-    if check_level_type(class_type) not in (1, 2) and class_type != '':
-        code = code.replace('%s%s' % (n, 'Child' * total), '%s%s == null ? null : %s.fromJson(%s%s)'
-                            % (n, ('Item' * total), class_type, n, ('Item' * total)))
-    else:
-        code = code.replace('%s' % ('Child' * total), '%s' % ('Item' * total))
+    code = code.replace('%s' % ('Child' * total), '%s' % ('Item' * total))
     code = code[code.find(';') + 1:]
-    code = code.replace('%s){' % n, 'jsonRes[\'%s\']){' % n).replace('${loop}\n', '').replace('jsonRes[\'%s\']){' % n, 'jsonRes[\'%s\']){' % f)
+    code = (
+        code
+        .replace('%s){' % n, "jsonRes['%s']){" % f)
+        .replace('${loop}\n', '')
+    )
 
     return list_loop + code
+
 
 
 def add_param_to_code(code, param):
@@ -176,8 +185,8 @@ def build_level_code(level_bean):
                         child_bean.append(level_bean.pop(0))
                     build_level_code(child_bean)
 
-                if t != 'List<>':
-                    t = t.replace('>', '?>')
+                # if t != 'List<>':
+                #     t = t.replace('>', '?>')
 
             # 不管如何，到这里的数据都是目前dict的一级子数据，作为参数传入模板中
             code = add_param_to_code(code, (f, t, n))
